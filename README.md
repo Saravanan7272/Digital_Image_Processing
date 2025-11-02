@@ -1,4 +1,4 @@
-# Digital Image Processing — IPA_ASS.ipynb
+# Digital Image Processing
 
 This repository contains a single Jupyter notebook, `IPA_ASS.ipynb`, which implements an image-processing pipeline covering image acquisition, noise simulation, denoising/filters, enhancement, segmentation, feature extraction, and a final pipeline visualization and reflection.
 
