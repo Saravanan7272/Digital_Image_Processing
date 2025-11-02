@@ -99,11 +99,11 @@ noisy_outputs/
 filter_outputs/
 segmentation_outputs/
 features_outputs/
-pipeline_outputs/pipeline_overview.png
+pipeline_outputs/pipeline_overview.jpg
 pipeline_outputs/pipeline_summary.txt
 ```
 
-4. Open `pipeline_outputs/pipeline_overview.png` to inspect the assembled visualization of the full pipeline.
+4. Open `pipeline_outputs/pipeline_overview.jpg` to inspect the assembled visualization of the full pipeline.
 
 ## Troubleshooting
 
@@ -115,5 +115,31 @@ pipeline_outputs/pipeline_summary.txt
 
 - Add a small `requirements.txt` (or `environment.yml`) to pin versions used during development.
 - Add a minimal unit test script that checks the notebook-generated folders and a couple of expected image files exist after a headless run.
-- Convert parts of the notebook into modular Python scripts for automated runs (e.g., `make_noisy.py`, `apply_filters.py`, `segment.py`) for reproducible pipelines.
+-- Convert parts of the notebook into modular Python scripts for automated runs (e.g., `make_noisy.py`, `apply_filters.py`, `segment.py`) for reproducible pipelines.
+
+## Preview — Original and Final Output
+
+If `image.jpeg` (the original image you captured) and `pipeline_outputs/pipeline_overview.jpg` (the assembled final output produced by the notebook) exist in the repository, they will render below when viewing this README on GitHub or a compatible viewer.
+
+![Original image](image.jpg)
+
+![Pipeline overview (final output)](pipeline_outputs/pipeline_overview.jpg)
+
+If the images do not appear:
+
+- Add your original image to the repository root as `image.jpeg` (or change `IMAGE_PATH` in the notebook to match your filename).
+- Run `IPA_ASS.ipynb` end-to-end (cells top → bottom) to generate outputs. The notebook will create `pipeline_outputs/pipeline_overview.jpg` when it assembles the final visualization.
+- After running, commit the generated `pipeline_outputs/pipeline_overview.jpg` and your `image.jpeg` if you want them to appear in the README on GitHub.
+
+Small command reminders (run in WSL/bash or your terminal):
+
+```bash
+# place your original image in the repo root
+# run the notebook in Jupyter/Colab to generate outputs
+# then add and commit the two files so they show up in the README
+git add image.jpeg pipeline_outputs/pipeline_overview.jpg
+git commit -m "Add original image and pipeline overview preview"
+git push
+```
+
 
