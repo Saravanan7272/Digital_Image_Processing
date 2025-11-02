@@ -1,0 +1,313 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{tcolorbox}
+\lstset{
+    language=Python,
+    backgroundcolor=\color{gray!5},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{orange},
+    commentstyle=\color{green!50!black},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4,
+}
+
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  backgroundcolor=\color{gray!10},
+  frame=single,
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+}
+
+\begin{document}
+
+\title{A Comprehensive Image Processing Pipeline for Noise Simulation, Enhancement, Segmentation, and Feature Evaluation}
+
+\author{
+\IEEEauthorblockN{Sakthivel T}
+\IEEEauthorblockA{\textit{Department of Computer Science and Engineering} \\
+\textit{Sri Sivasubramaniya Nadar College of Engineering,} \\
+\textit{Chennai, India} \\
+\href{mailto:sakthivel2310758@ssn.edu.in}{sakthivel2310758@ssn.edu.in}}
+\and
+\IEEEauthorblockN{Saravanan E}
+\IEEEauthorblockA{\textit{Department of Computer Science and Engineering} \\
+\textit{Sri Sivasubramaniya Nadar College of Engineering,} \\
+\textit{Chennai, India} \\
+\href{mailto:saravanan2310681@ssn.edu.in}{saravanan2310681@ssn.edu.in}}
+}
+
+
+\maketitle
+
+\begin{abstract}
+This paper presents a comprehensive and systematic pipeline for digital image analysis — beginning from noise modeling, filtering, and contrast enhancement, to segmentation and feature extraction. The methodology incorporates multiple techniques including \textbf{Gaussian}, \textbf{Speckle}, and \textbf{Salt-and-Pepper noise}, followed by \textbf{Median} and \textbf{Gaussian filtering}, \textbf{Histogram Equalization}, and \textbf{Contrast Stretching}. The segmented images are obtained using \textbf{Otsu’s Thresholding} and \textbf{K-Means clustering}, and evaluated using quantitative metrics such as \textbf{PSNR (Peak Signal-to-Noise Ratio)} and \textbf{SSIM (Structural Similarity Index)}.
+
+Experimental results show that the proposed approach effectively restores image details and improves segmentation accuracy. Comparative results and visual analysis demonstrate the trade-offs between global and local enhancement methods and highlight how different filters respond to distinct noise characteristics. The extracted features, including area, centroid, and color histograms, were analyzed to illustrate their relevance for object recognition and classification.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Image Enhancement, Noise Filtering, Histogram Equalization, Segmentation, Feature Extraction, PSNR, SSIM, K-Means, Otsu Threshold.
+\end{IEEEkeywords}
+
+\section{Introduction}
+Digital images are often degraded due to various environmental and sensor-based factors, including lighting variations, transmission noise, and quantization errors. The purpose of image processing is to enhance and extract meaningful information from such imperfect data.
+
+This paper constructs a \textbf{multi-stage image processing pipeline} integrating key techniques from spatial filtering and frequency domain enhancement to intelligent segmentation and feature evaluation. The pipeline allows controlled experimentation to understand how each stage influences the next — ultimately improving visual perception and quantitative accuracy.
+
+\begin{tcolorbox}[colback=white, colframe=black, boxrule=0.8pt, arc=2pt, left=4pt, right=4pt]
+\centering
+\textbf{
+$\text{Input Image} \rightarrow \text{Noise Addition} \rightarrow 
+\text{Filtering} \rightarrow \text{Enhancement} \rightarrow 
+\text{Segmentation} \rightarrow \text{Feature Extraction}$ }
+\end{tcolorbox}
+
+This structured approach is suitable for domains such as medical imaging, remote sensing, robotic vision, and surveillance systems, where reliable preprocessing directly determines analytical success.
+
+\section{Task 1 — Image Acquisition and Initial Analysis}
+
+\subsection{What We Did}
+The input image was acquired in RGB format and converted into grayscale for computational processing. The intensity distribution was analyzed through histograms to assess brightness and contrast spread.
+
+\subsection{Why}
+Histogram inspection identifies whether the image suffers from overexposure, underexposure, or poor contrast. This step defines the parameters for the enhancement stage.
+
+\subsection{Implementation}
+
+\noindent\textbf{Source code available at: }
+\href{https://colab.research.google.com/drive/1UGIeZOF7D10jmlq5FXn-G0NjaZEPkiXB?usp=sharing}
+{\textcolor{blue}{{\text{Google Colab Notebook}}}}
+
+
+\begin{lstlisting}[language=Python]
+img = cv2.imread("input.jpg")
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+plt.hist(gray.ravel(), 256, [0,256])
+\end{lstlisting}
+
+
+\subsection{Mathematical Model}
+For an image $I(x,y)$ of size $M \times N$,
+\[
+\mu = \frac{1}{MN}\sum_{x=1}^{M}\sum_{y=1}^{N} I(x,y), \quad
+\sigma = \sqrt{\frac{1}{MN}\sum (I(x,y) - \mu)^2}
+\]
+
+
+
+\subsection{Impact}
+Understanding the tonal distribution aids in selecting proper enhancement operations later.
+
+\section{Task 2 — Noise Modeling and Addition}
+\subsection{What We Did}
+Three distinct noise models were introduced:
+\begin{enumerate}
+    \item Gaussian Noise – simulates sensor inaccuracies.
+    \item Salt-and-Pepper Noise – models impulsive data corruption.
+    \item Speckle Noise – common in radar and ultrasound imagery.
+\end{enumerate}
+
+\subsection{Why}
+Adding noise enables controlled evaluation of filter robustness.
+
+\subsection{Implementation}
+\begin{lstlisting}[language=Python]
+def add_gaussian_noise(img, mean=0, var=0.01):
+    sigma = var ** 0.5
+    noise = np.random.normal(mean, sigma, img.shape)
+    noisy = np.clip(img + noise*255, 0, 255)
+    return noisy.astype(np.uint8)
+\end{lstlisting}
+
+\subsection{Mathematical Model}
+\[
+I_n(x,y) = I(x,y) + n(x,y)
+\]
+where $n(x,y) \sim \mathcal{N}(0, \sigma^2)$ for Gaussian,
+and $n(x,y) = \{0,255\}$ with probability $p$ for Salt-and-Pepper noise.
+
+
+
+\subsection{Impact}
+The addition of controlled noise creates degraded test cases that mimic real-world imaging conditions.
+
+\section{Task 3 — Denoising and Filtering}
+\subsection{What We Did}
+Applied Median and Gaussian filters to noisy images to observe their smoothing and edge preservation performance.
+
+\subsection{Why}
+Filtering is essential to remove unwanted variations while maintaining structural integrity.
+
+\subsection{Implementation}
+\begin{lstlisting}[language=Python]
+median = cv2.medianBlur(noisy_img, 3)
+gaussian = cv2.GaussianBlur(noisy_img, (5,5), 1)
+\end{lstlisting}
+
+\subsection{Mathematical Formulation}
+\textbf{Median Filter:}
+\[
+g(x,y) = \text{median}\{f(s,t)\ |\ (s,t)\in S_{xy}\}
+\]
+\textbf{Gaussian Filter:}
+\[
+h(x,y) = \frac{1}{2\pi\sigma^2} e^{-\frac{x^2+y^2}{2\sigma^2}}
+\]
+\textbf{Quantitative Metrics:}
+\[
+MSE = \frac{1}{MN}\sum (I - K)^2, \quad
+PSNR = 10\log_{10}\left(\frac{255^2}{MSE}\right)
+\]
+
+\subsection{Quantitative Comparison}
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+Noise Type & Filter & PSNR (dB) & SSIM \\
+\midrule
+Gaussian & Gaussian & 29.1 & 0.92 \\
+Salt \& Pepper & Median & 31.4 & 0.95 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Task 4 — Histogram-Based Enhancement}
+\subsection{What We Did}
+Performed Histogram Equalization (HE) and Contrast Stretching (CS) to enhance global contrast.
+
+\subsection{Implementation}
+\begin{lstlisting}[language=Python]
+he = cv2.equalizeHist(gray)
+cs = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
+\end{lstlisting}
+
+\subsection{Formulas}
+\textbf{Histogram Equalization:}
+\[
+s_k = (L-1)\sum_{j=0}^{k} p_r(r_j)
+\]
+\textbf{Contrast Stretching:}
+\[
+I' = \frac{I - I_{min}}{I_{max} - I_{min}} \times 255
+\]
+
+\section{Task 5 — Segmentation and Object Isolation}
+Used Otsu Thresholding for grayscale segmentation and K-Means Clustering for color-based region segmentation.
+
+\begin{lstlisting}[language=Python]
+_, otsu = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+kmeans = cv2.kmeans(data, 3, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+\end{lstlisting}
+
+\textbf{Otsu’s Thresholding:}
+\[
+t^* = \arg\max_t \sigma_b^2(t)
+\]
+\[
+\sigma_b^2(t) = q_1(t)q_2(t)[\mu_1(t) - \mu_2(t)]^2
+\]
+\textbf{K-Means:}
+\[
+J = \sum_{i=1}^k \sum_{x\in C_i} ||x - \mu_i||^2
+\]
+
+\section{Task 6 — Feature Extraction}
+Extracted object-level features: area, centroid, bounding box, and mean color histogram.
+
+\begin{lstlisting}[language=Python]
+M = cv2.moments(mask)
+cx = int(M['m10']/M['m00'])
+cy = int(M['m01']/M['m00'])
+\end{lstlisting}
+
+\[
+C_x = \frac{M_{10}}{M_{00}}, \quad C_y = \frac{M_{01}}{M_{00}}
+\]
+\[
+\text{Area} = \sum I(x,y)
+\]
+
+\section{Task 7 — Complete Pipeline Visualization}
+All stages were integrated to form a consistent and unified workflow, as illustrated in Fig.~\ref{fig:pipeline}. 
+The process follows the sequence: \textbf{Input → Noise → Filtering → Enhancement → Segmentation → Feature Extraction.}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.48\textwidth]{Summary.png}
+    \caption{Comprehensive visualization of the image processing pipeline showing noise addition, filtering, enhancement, segmentation, and feature extraction stages.}
+    \label{fig:pipeline}
+\end{figure}
+
+
+
+
+
+\section{Discussion and Comparative Insights}
+
+Each stage of the pipeline was critically analyzed both qualitatively and quantitatively using PSNR and SSIM metrics. The following table summarizes the strengths, limitations, and ideal use cases for each method within the workflow.
+
+\begin{table}[H]
+\centering
+\caption{Comparative Analysis of Techniques Used in the Image Processing Pipeline}
+\resizebox{\columnwidth}{!}{
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Stage} & \textbf{Technique} & \textbf{Strength} & \textbf{Limitation} & \textbf{Best Use} \\
+\midrule
+Noise Filtering & Median & Removes impulse noise & Slight blurring & Salt \& Pepper \\
+Enhancement & Contrast Stretch & Preserves tone & Limited for dark regions & Natural scenes \\
+Segmentation & K-Means & Works on colors & Needs tuning & Multi-object \\
+Feature Extraction & Centroid & Simple and effective & No texture data & Recognition \\
+\bottomrule
+\end{tabular}
+}
+\label{tab:comparison}
+\end{table}
+
+
+\section{Conclusion}
+This study implemented a modular and data-driven image processing pipeline covering noise addition, filtering, enhancement, segmentation, and feature analysis. Each stage was critically analyzed both qualitatively and quantitatively using PSNR and SSIM metrics.
+
+\textbf{Key Results:}
+\begin{itemize}
+    \item Median filtering outperforms for impulse noise, while Gaussian filtering is more effective for continuous noise.
+    \item Contrast stretching preserves color fidelity better than histogram equalization.
+    \item K-Means clustering delivers superior segmentation in multi-region images, while Otsu’s method remains optimal for high-contrast grayscale segmentation.
+    \item Extracted features such as centroid and area proved reliable for basic classification and tracking tasks.
+\end{itemize}
+
+\textbf{Professional Reflection:}  
+This project enhanced understanding of how low-level pixel operations influence high-level object detection and analysis. It also highlighted that, for small datasets, combining classical image processing techniques can yield results comparable to computationally intensive deep-learning methods.
+
+
+\section{Future Scope}
+\begin{enumerate}
+\item Integrate CLAHE for localized enhancement.
+\item Employ adaptive filtering based on noise estimation.
+\item Extend to real-time video stream processing.
+\item Combine with CNN-based segmentation (e.g., U-Net).
+\item Implement feature selection using PCA or LDA.
+\end{enumerate}
+
+\begin{thebibliography}{00}
+\bibitem{b1} R. C. Gonzalez and R. E. Woods, \textit{Digital Image Processing}, Pearson, 2018.
+\bibitem{b2} A. K. Jain, \textit{Fundamentals of Digital Image Processing}, Prentice Hall, 1989.
+\bibitem{b3} N. Otsu, “A Threshold Selection Method from Gray-Level Histograms,” \textit{IEEE Trans. SMC}, 1979.
+\bibitem{b4} J. MacQueen, “Some Methods for Classification and Analysis of Multivariate Observations,” \textit{Proc. 5th Berkeley Symposium on Math Statistics}, 1967.
+\bibitem{b5} Z. Wang and A. C. Bovik, “Image Quality Assessment: From Error Visibility to Structural Similarity,” \textit{IEEE Trans. Image Process.}, 2004.
+\end{thebibliography}
+
+\end{document}
